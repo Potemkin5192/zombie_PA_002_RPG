@@ -3421,10 +3421,7 @@ if (reversed == null) { reversed = false; }
 	}
 	this.frame_24 = function() {
 		this.stop();
-		this.attack.addEventListener('click', function (){
-			window.dispatchEvent(new Event('firstAttack'));
-			window.dispatchEvent(new Event('buttonSFX'));
-		});
+		window.dispatchEvent(new Event('firstAttack'));
 	}
 	this.frame_39 = function() {
 		this.stop();
@@ -3434,16 +3431,8 @@ if (reversed == null) { reversed = false; }
 	}
 	this.frame_64 = function() {
 		this.stop();
-		this.attack_btn.addEventListener('click', atkClick);
-		function atkClick() {
-			window.dispatchEvent(new Event('attackSeqPlay'));
-			window.dispatchEvent(new Event('buttonSFX'));
-		}
-		this.defense.addEventListener('click', defClick);
-		function defClick() {
-			window.dispatchEvent(new Event('defenseSeqPlay'));
-			window.dispatchEvent(new Event('buttonSFX'));
-		}
+		window.dispatchEvent(new Event('attackBtnClickable'));
+		window.dispatchEvent(new Event('defenseBtnClickable'));
 	}
 	this.frame_80 = function() {
 		this.stop();
@@ -3466,15 +3455,14 @@ if (reversed == null) { reversed = false; }
 	this.defense.setTransform(-133.5,126.5);
 	this.timeline.addTween(cjs.Tween.get(this.defense).wait(40).to({y:-104.65},24,cjs.Ease.cubicOut).to({y:126.5},15,cjs.Ease.backIn).to({_off:true},1).wait(1));
 	// Button_attack_png
-	this.attack = new lib.btn_attack();
-	this.attack.name = "attack";
-	this.attack.setTransform(131.5,126.5);
 	this.attack_btn = new lib.btn_attack();
 	this.attack_btn.name = "attack_btn";
 	this.attack_btn.setTransform(131.5,126.5);
-	this.attack_btn._off = true;
-	this.timeline.addTween(cjs.Tween.get(this.attack).wait(1).to({x:0},0).to({y:-106.05},23,cjs.Ease.cubicOut).to({y:126.5},15,cjs.Ease.backIn).to({_off:true},1).wait(24).to({_off:false,x:131.5},15,cjs.Ease.backIn).to({_off:true},1).wait(1));
-	this.timeline.addTween(cjs.Tween.get(this.attack_btn).wait(40).to({_off:false},0).to({y:-104.65},24,cjs.Ease.cubicOut).to({_off:true,y:126.5},15,cjs.Ease.backIn).wait(2));
+	this.attack = new lib.btn_attack();
+	this.attack.name = "attack";
+	this.attack.setTransform(131.5,126.5);
+	this.timeline.addTween(cjs.Tween.get({}).to({state:[{t:this.attack_btn}]}).to({state:[{t:this.attack_btn}]},1).to({state:[{t:this.attack_btn}]},23).to({state:[{t:this.attack_btn}]},15).to({state:[{t:this.attack_btn}]},1).to({state:[{t:this.attack_btn}]},24).to({state:[{t:this.attack}]},15).to({state:[]},1).wait(1));
+	this.timeline.addTween(cjs.Tween.get(this.attack_btn).wait(1).to({x:0},0).to({y:-106.05},23,cjs.Ease.cubicOut).to({y:126.5},15,cjs.Ease.backIn).wait(1).to({x:131.5},0).to({y:-104.65},24,cjs.Ease.cubicOut).to({_off:true,y:126.5},15,cjs.Ease.backIn).wait(2));
 	// bottom_bg
 	this.instance = new lib.bottom_plash();
 	this.instance.setTransform(0,165.75);
@@ -3548,6 +3536,8 @@ if (reversed == null) { reversed = false; }
 		var zombie = this.zombie;
 		var heartbeats = this.heartbeat;
 		heartbeats.visible = false;
+		bottom.defense.clickable = false;
+		bottom.attack_btn.clickable = false;
 		//components
 		//audio functions
 		window.addEventListener('loseSFX', function () {
@@ -3564,9 +3554,6 @@ if (reversed == null) { reversed = false; }
 		window.addEventListener('heartBeatStop', function () {
 			heartbeat.pause();
 			heartbeats.visible = false;
-		});
-		window.addEventListener('buttonSFX', function () {
-			btnSFX.play();
 		});
 		window.addEventListener('footstepsPlay', function () {
 			footsteps.play();
@@ -3598,6 +3585,37 @@ if (reversed == null) { reversed = false; }
 		});
 		//audio functions
 		//playback functions
+		window.addEventListener('attackBtnClickable', function () {
+			bottom.attack_btn.clickable = true;
+		});
+		window.addEventListener('defenseBtnClickable', function () {
+			bottom.defense.clickable = true;
+		});
+		bottom.attack_btn.addEventListener('click', attackClick);
+		function attackClick() {
+			if (bottom.attack_btn.clickable) {
+				main.gotoAndPlay(237);
+				bottom.defense.clickable = false;
+				btnSFX.play();
+				createjs.Tween.get(bottom.hand)
+					.to({
+						alpha: 0,
+						visible: false
+					}, 350);
+			}
+		}
+		bottom.defense.addEventListener('click', defenseClick);
+		function defenseClick() {
+			if (bottom.defense.clickable) {
+				main.gotoAndPlay(477);
+				bottom.attack_btn.clickable = false;
+				createjs.Tween.get(bottom.hand)
+					.to({
+						alpha: 0,
+						visible: false
+					}, 350);
+			}
+		}
 		window.addEventListener('playFirstUI', function () {
 			bottom.gotoAndPlay(1);
 			hero.gotoAndPlay(1);
@@ -3609,29 +3627,18 @@ if (reversed == null) { reversed = false; }
 			zombie.gotoAndPlay(25);
 		});
 		window.addEventListener('firstAttack', function () {
-			main.gotoAndPlay(82);
+			bottom.attack_btn.addEventListener('click', firstAttack);
 		});
+		function firstAttack() {
+			if (bottom.attack_btn.clickable == false) {
+				main.gotoAndPlay(82);
+				btnSFX.play();
+				bottom.attack_btn.removeEventListener('click', firstAttack);
+			}
+		}
 		window.addEventListener('playSecondUI', function () {
 			zombie.gotoAndPlay(46);
 			bottom.gotoAndPlay(40);
-		});
-		window.addEventListener('attackSeqPlay', function () {
-			main.gotoAndPlay(237);
-			bottom.attack_btn.removeAllEventListeners();
-			createjs.Tween.get(bottom.hand)
-				.to({
-					alpha: 0,
-					visible: false
-				}, 350);
-		});
-		window.addEventListener('defenseSeqPlay', function () {
-			main.gotoAndPlay(477);
-			bottom.defense.removeAllEventListeners();
-			createjs.Tween.get(bottom.hand)
-				.to({
-					alpha: 0,
-					visible: false
-				}, 350);
 		});
 		window.addEventListener('playContinue', function () {
 			center.gotoAndPlay(203);
@@ -3665,7 +3672,7 @@ if (reversed == null) { reversed = false; }
 		window.addEventListener('playNextlevel', function () {
 			center.gotoAndPlay(172);
 			musicBG.pause();
-			musicBG.loop = false;	
+			musicBG.loop = false;
 			yesWin.play();
 			win.play();
 		});
@@ -3785,8 +3792,8 @@ lib.properties = {
 	color: "#FFFFFF",
 	opacity: 1.00,
 	manifest: [
-		{src:"index_atlas_P_1.png?1655305711087", id:"index_atlas_P_1"},
-		{src:"index_atlas_NP_1.jpg?1655305711088", id:"index_atlas_NP_1"}
+		{src:"index_atlas_P_1.png?1655360741263", id:"index_atlas_P_1"},
+		{src:"index_atlas_NP_1.jpg?1655360741264", id:"index_atlas_NP_1"}
 	],
 	preloads: []
 };
